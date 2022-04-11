@@ -1,0 +1,39 @@
+mdmake-1.05 > new-version(2.00) by takizawa
+
+[cluster.cpp] 追加
+
+[convert.cpp] 変更
+・mdlZRESの追加(あらゆる構造をz軸に空間を取ったfilm構造にする)
+・mdlGROUPの追加(cluster計算用、SiGeのGeクラスターをグループ分けする)
+・mdlINTERFACEの追加(河野君の研究用　high-k/酸化膜界面の界面付近から分子を減らす)
+
+[main.cpp]　変更
+・Version numberの更新
+・help文書の更新
+　★cluster作成用のコマンドの案内を追加
+　★rdf計算用のコマンドの案内を追加
+　★組成にNaClやGeSbTeの追加
+　★convertのオプションの説明を追加
+・追加したclusterなどの関数の呼び出しを設定
+
+[rdf.cpp]　追加
+
+[rocksalt.cpp]　変更
+・GeSbTeの組成に対応
+・NaClの組成に対応
+
+[stack.cpp]　変更
+・stackがNaClに対応
+
+[swap.cpp]　追加
+
+[wurtz_layer.cpp]　変更
+・zl1-3H-SiO2をlayer-by-layer酸化に対応できるように修正
+・zl-3H-SiO2をlayer-by-layer酸化に対応できるように修正
+
+*Makefile
+・追加したファイルをコンパイルするように対応
+
+*mdmake_README.txt
+・初版を作成
+

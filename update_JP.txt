@@ -1,0 +1,61 @@
+※本実装の際は、swap.cppとcluster.cppの
+　pathを空欄に！！！
+
+
+1:main.cpp
+(swap用)
+L30 : "option"にswap用の変数を追加
+L68 : "swap"の関数宣言
+L91 : "int wap"の関数宣言
+L108: "opts.method"の引数宣言
+L135: "mdmake -h"に--swapの説明を追加
+L212: "case W"にswap関数を指定
+L302: if文にswap関数を追加
+
+(cluster用)
+L31 : "option"にcluster用の変数を追加
+L69 : "cluster"の関数宣言
+L92 : "int cls"の関数宣言
+L109: "opts.periodic"の引数宣言
+L136: "mdmake -h"に--clusterの説明を追加
+L216: "case L"にcluster関数を指定
+L303: if文にcluster関数を追加
+
+(rocksalt用)
+L155: "mdmake -h"にGSTの説明を追加
+L353: if文でGSTの際にrocksalt関数を使用するように
+
+
+2:convert.cpp
+(swap用)
+L101: mdlGROUPを入力したときの説明追加
+L593: mdlGROUP用の特殊判定追加
+L1098:mdlGROUP追加
+
+(rocksalt用)
+L14 : typedef enumにSbとTe追加
+L77 : --lammps用の判定にGeSbTeを追加
+L176: first判定にSbとTeを追加
+L253: atomnum数えに追加
+L330: first判定にSbとTeを追加
+L394: atomnum数えに追加
+L477: GeSbTeの判定部分追加
+
+
+3:swap.cpp
+丸ごと追加
+
+
+4:cluster.cpp
+丸ごと追加
+
+5:rocksalt.cpp
+L63 :GeSbTeの設定を追加
+　　 (新しいやり方なので要チェック)
+
+6:opt.h
+string methodの追加
+string periodicの追加
+
+7.Makefile
+swap.o cluster.oの追加 

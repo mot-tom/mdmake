@@ -1,0 +1,40 @@
+※本実装の際は、swap.cppとcluster.cppの
+　pathを空欄に！！！
+
+
+1:main.cpp
+(rdf用)
+
+
+(rocksalt用)
+L155: "mdmake -h"に　の説明を追加
+L353: if文でGSTの際にrocksalt関数を使用するように
+
+
+2:convert.cpp
+(rdf用)
+
+
+(rocksalt用)
+L14 : typedef enumにNaとClを追加
+L81 : --lammps用の判定にNaCl追加
+L182: first判定にNaとClを追加
+L257: atomnum数えに追加
+L334: first判定にNaとClを追加
+L402: atomnum数えに追加
+L575: GeSbTeの判定部分追加
+L828: NaClの判定追加
+
+3:rdf.cpp
+丸ごと追加
+
+4:rocksalt.cpp
+L48 :GeSbTeの設定を追加
+　　 (新しいやり方なので要チェック)
+
+5:opt.h
+string methodの追加
+string periodicの追加
+
+6.Makefile
+rdf.oの追加 

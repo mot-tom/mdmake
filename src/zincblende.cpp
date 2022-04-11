@@ -1,0 +1,227 @@
+#include <iostream>
+#include <sstream>
+#include <cstdlib>
+#include <string>
+#include <vector>
+#include <math.h>
+#include "opt.h"
+using namespace std;
+int UNIT_ATOM1_NUM_ZB = 4;
+int UNIT_ATOM2_NUM_ZB = 4;
+
+extern int shape(string shape, double x, double y, double z);
+ 
+int zincblende(int argc, char **argv, optpara opts){
+        string atm, atm2, atm3, atm4;
+        double conc2 = 0, conc3 = 0, conc4 = 0;
+        double lattice = 5.431;//lattice_costant[A]
+        double c11, c12, c44;
+        int nx = 4, ny = 4, nz = 4;
+
+        if(opts.cellnum.length() > 0) {
+          istringstream cell_iss(opts.cellnum.c_str());
+          cell_iss >> nx >> ny >> nz;
+          if(nx == 0 || ny == 0 || nz == 0) {
+            cerr << "Cell number is wrong" << endl;
+            return 1;
+           }
+         }
+        cerr << "cell size " << nx << "x" << ny << "x" << nz << endl;
+        cerr << "cell shape " << opts.shape << endl;
+
+        int atmall = 8*nx*ny*nz;
+        int atmnum2 = 0, atmnum3 = 0, atmnum4 = 0;
+        double reconc2 = 0, reconc3 = 0, reconc4 = 0;
+
+        double sxx = 0, syy = 0, szz = 0, syz = 0, szx = 0, sxy = 0;//stress[GPa]
+        double exx = 0, eyy = 0, ezz = 0, eyz = 0, ezx = 0, exy = 0;//strain
+
+        int i, j, k, l, m, n;
+        double lx, ly, lz, txy, txz, tyx, tyz, tzx, tzy;
+
+        string hess;
+
+        cerr << "mdpotential " << opts.potential << endl;
+        cerr << "atomcomp " << opts.atomcomp << endl;
+        cerr << "atomnum " << atmall << " atoms" << endl;
+
+        if(opts.atomcomp == "3C-SiGe") {
+          atm = "Si";
+          atm2 = "Ge";
+          conc2 = 0.5;
+          lattice = 5.431 + 0.2*conc2 + 0.027*conc2*conc2;
+          c11 = 0.00767769330941004 - 0.00211568198181548*conc2;
+          c12 = -0.00213584937950066 + 0.000539603259448393*conc2;
+          c44 = 0.0125628140703518 - 0.00240724580988776*conc2;
+        }
+        else if(opts.atomcomp == "3C-SiC") {
+          atm = "Si";
+          atm2 = "C ";
+          lattice = 4.3596;
+          c11 = 0.00367264788221944;
+          c12 = -0.00104655929097546;
+          c44 = 0.004293688278231;
+        }
+        else if(opts.atomcomp == "3C-SiCX") {
+          atm = "Si";
+          atm2 = "C ";
+          atm3 = "X ";
+          if(opts.atomratio.length() > 0) {
+            istringstream conc_iss(opts.atomratio.c_str());
+            conc_iss >> conc3;
+           }
+          else conc3 = 0.01;
+          atmnum3 = ((int)(atmall*conc3));
+	   reconc3 = (double)atmnum3/atmall;
+          cerr << "atm3     " << atm3 << endl;
+          cerr << "atm3num  " << atmnum3 << endl;
+          cerr << "atm3conc " << reconc3 << endl;
+          cerr << "rand     " << opts.seed << endl;
+          lattice = 4.360;
+          c11 = 0.00367264788221944;
+          c12 = -0.00104655929097546;
+          c44 = 0.004293688278231;
+        }
+        else if(opts.atomcomp == "GaAs") {
+          atm = "Ga";
+          atm2 = "As";
+          lattice = 5.65325;
+          c11 = 0;
+          c12 = 0;
+          c44 = 0;
+        }
+        else if(opts.atomcomp == "InAs") {
+          atm = "In";
+          atm2 = "As";
+          lattice = 6.0583;
+          c11 = 0;
+          c12 = 0;
+          c44 = 0;
+        }
+        else if(opts.atomcomp == "3C-BN") {
+          atm = "B ";
+          atm2 = "N ";
+          lattice = 3.615;
+          c11 = 0;
+          c12 = 0;
+          c44 = 0;
+        }
+
+        if(opts.stress.length() > 0){
+                istringstream s_iss(opts.stress.c_str());
+                s_iss >> sxx >> syy >> szz >> syz >> szx >> sxy;//[GPa]
+                cerr << "stress Sxx=" << sxx;
+                cerr << "GPa Syy=" << syy << "GPa Szz=" << szz;
+                cerr << "GPa Syz=" << syz << "GPa Szx=" << szx << "GPa Sxy=" << sxy << "GPa" << endl;
+                exx = c11*sxx + c12*syy + c12*szz;
+                eyy = c12*sxx + c11*syy + c12*szz;
+                ezz = c12*sxx + c12*syy + c11*szz;
+                eyz = c44*syz/2; ezx = c44*szx/2; exy = c44*sxy/2;
+	}
+        if(opts.strain.length() > 0){
+                istringstream e_iss(opts.strain.c_str());
+                e_iss >> exx >> eyy >> ezz >> eyz >> ezx >> exy;//[%]
+                cerr << "strain Exx=" << exx;
+                cerr << "% Eyy=" << eyy << "% Ezz=" << ezz;
+                cerr << "% Eyz=" << eyz << "% Ezx=" << ezx << "% Exy=" << exy << "%" << endl;
+                exx = 0.01*exx; eyy = 0.01*eyy; ezz = 0.01*ezz;
+                eyz = 0.01*eyz; ezx = 0.01*ezx; exy = 0.01*exy;
+	}
+
+        lx = nx*lattice*(1+exx);
+        ly = ny*lattice*(1+eyy);
+        lz = nz*lattice*(1+ezz);
+        txy = nx*lattice*exy/2;
+        txz = nx*lattice*ezx/2;
+        tyx = ny*lattice*exy/2;
+        tyz = ny*lattice*eyz/2;
+        tzx = nz*lattice*ezx/2;
+        tzy = nz*lattice*eyz/2;
+
+        Coordinate atom1[4] = {
+                {0, 0, 0}, {0, 0.5, 0.5}, {0.5, 0, 0.5}, {0.5, 0.5, 0}
+        };
+        Coordinate atom2[4] = {
+                {0.25, 0.25, 0.25}, {0.25, 0.75, 0.75}, {0.75, 0.25, 0.75}, {0.75, 0.75, 0.25}
+        };
+
+	 cout << "Gear(5) RAND=10 " << opts.potential << " T=300.0 STEP=(0,1000100)" << endl;
+        cout << "BLOCK FIXANGLE W=INF Q=INF LOGSTEP=10 PRINTVELOCITY dt=0.1fs scratch(100)" << endl << endl;
+
+        if(opts.stress.length() > 0 || opts.strain.length() > 0) cout << "straind ";
+        cout << opts.atomcomp;
+        if(atmnum3) cout << " " << atm3 << "=" << reconc3 << " Rand=" << opts.seed;
+        if(opts.stress.length() > 0){
+                cout << " Sxx=" << sxx;
+                cout << "GPa Syy=" << syy << "GPa Szz=" << szz;
+                cout << "GPa Syz=" << syz << "GPa Szx=" << szx << "GPa Sxy=" << sxy << "GPa";
+	}
+        if(opts.strain.length() > 0){
+                cout << " Exx=" << exx;
+                cout << " Eyy=" << eyy << " Ezz=" << ezz;
+                cout << " Eyz=" << eyz << " Ezx=" << ezx << " Exy=" << exy;
+	}
+        cout << " structure" << endl << endl;
+
+        cout << lx << " " << txy << " " << txz << opts.pbc_x << endl;
+        cout << tyx << " " << ly << " " << tyz << opts.pbc_y << endl;
+        cout << tzx << " " << tzy << " " << lz << opts.pbc_z << endl << endl;
+
+	 vector<string> atmlist1, atmlist2;
+	 for(m=0; m<atmall; m++){
+		if(m<atmnum4) {
+                if(m%2) atmlist1.push_back(atm4);
+                else atmlist2.push_back(atm4);
+                }
+		else if(m<atmnum4+atmnum3) {
+                if(m%2) atmlist1.push_back(atm3);
+                else atmlist2.push_back(atm3);
+                }
+		else {
+                if(m%2) atmlist1.push_back(atm);
+                else atmlist2.push_back(atm2);
+                }
+	 }
+
+	 srand(opts.seed);
+	 for(m=0; m<atmlist1.size(); m++){
+		int n = rand()%(m+1);
+		string t = atmlist1[m];
+		atmlist1[m] = atmlist1[n];
+		atmlist1[n] = t;
+	 }
+	 for(m=0; m<atmlist2.size(); m++){
+		int n = rand()%(m+1);
+		string t = atmlist2[m];
+		atmlist2[m] = atmlist2[n];
+		atmlist2[n] = t;
+	 }
+
+        int delatm = 0;
+	 m = 0; n = 0;
+        for(i=0; i<nx; i++){
+          for(j=0; j<ny; j++){
+            for(k=0; k<nz; k++){
+                for(l=0; l<UNIT_ATOM1_NUM_ZB; l++){
+                      double ax = (atom1[l].x+i)/nx, ay = (atom1[l].y+j)/ny, az = (atom1[l].z+k)/nz;
+                      if(shape(opts.shape, ax, ay, az))
+                        cout << atmlist1[m] << " " << ax << " " << ay << " " << az << " " << endl;
+                      else delatm++;
+                      m++;
+                      ax = (atom2[l].x+i)/nx; ay = (atom2[l].y+j)/ny; az = (atom2[l].z+k)/nz;
+                      if(shape(opts.shape, ax, ay, az))
+                        cout << atmlist2[n] << " " << ax << " " << ay << " " << az << " " << endl;
+                      else delatm++;
+                      n++;
+                }
+            }
+          }
+        }
+        if(opts.shape != "cuboid"){
+          cerr << "deleted " << delatm << " atoms" << endl;
+          cerr << "remains " << atmall - delatm << " atoms" << endl;
+         }
+
+        return 0;
+}
+
